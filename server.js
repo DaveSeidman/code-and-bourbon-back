@@ -3,6 +3,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const passport = require('passport');
 const session = require('express-session');
+const MongoStore = require('connect-mongo');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const passportConfig = require('./passportConfig');
@@ -18,11 +19,18 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(cookieParser());
+
 app.use(session({
-  secret: "yourSecretKey",
+  secret: process.env.SESSION_SECRET || "yourSecretKey",
   resave: false,
-  saveUninitialized: false
+  saveUninitialized: false,
+  store: MongoStore.create({
+    mongoUrl: process.env.MONGO_URI, // Use your MongoDB connection
+    collectionName: 'sessions',
+    ttl: 24 * 60 * 60, // Session expires after 1 day
+  }),
 }));
+
 app.use(passport.initialize());
 app.use(passport.session());
 
@@ -31,7 +39,9 @@ passportConfig();
 // Routes
 app.use('/auth', authRoutes);
 
-const PORT = process.env.PORT || 3000;
+app.get('/', (req, res) => { res.send("Code and Bourbon Backend Server") });
+
+const PORT = process.env.PORT || 5000;
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGO_URI, {
