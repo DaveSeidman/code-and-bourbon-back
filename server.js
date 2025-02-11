@@ -14,20 +14,20 @@ const app = express();
 
 // Middleware
 app.use(cors({
-  origin: "http://localhost:8080",  // React frontend
+  origin: ["http://localhost:8080", "https://codeandbourbon.com"],
   credentials: true,
 }));
 app.use(express.json());
 app.use(cookieParser());
 
 app.use(session({
-  secret: process.env.SESSION_SECRET || "yourSecretKey",
+  secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
   store: MongoStore.create({
-    mongoUrl: process.env.MONGO_URI, // Use your MongoDB connection
+    mongoUrl: process.env.MONGO_URI,
     collectionName: 'sessions',
-    ttl: 24 * 60 * 60, // Session expires after 1 day
+    ttl: 24 * 60 * 60 * 14,
   }),
 }));
 
@@ -41,7 +41,7 @@ app.use('/auth', authRoutes);
 
 app.get('/', (req, res) => { res.send("Code and Bourbon Backend Server") });
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT;
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGO_URI, {
