@@ -27,9 +27,15 @@ app.use(session({
   store: MongoStore.create({
     mongoUrl: process.env.MONGO_URI,
     collectionName: 'sessions',
-    ttl: 24 * 60 * 60 * 14,
+    ttl: 24 * 60 * 60 * 14, // 14 days
   }),
+  cookie: {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "none",
+  }
 }));
+
 
 app.use(passport.initialize());
 app.use(passport.session());
