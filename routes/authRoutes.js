@@ -14,14 +14,20 @@ router.get('/google/callback',
     session: true
   }),
   (req, res) => {
-    res.send(`
-      <script>
-        window.opener.postMessage({ type: 'oauth-success', user: ${JSON.stringify(req.user)} }, "${FRONTEND_URL}");
-        window.close();
-      </script>
-    `);
+    // Optional: Explicitly call req.login again (though Passport should have already done this).
+    // Including it ensures the session is definitely established before redirecting.
+    req.login(req.user, (err) => {
+      if (err) {
+        console.error('Login error after OAuth callback:', err);
+        // Redirect to a specific error page or fallback
+        return res.redirect(`${FRONTEND_URL}/login?error=true`);
+      }
+      // Redirect to your frontend. The session cookie is set on this top-level navigation.
+      return res.redirect(FRONTEND_URL);
+    });
   }
 );
+
 
 // Check authenticated user
 router.get('/user', (req, res) => {
@@ -30,6 +36,15 @@ router.get('/user', (req, res) => {
   } else {
     res.status(401).json({ message: "Unauthorized" });
   }
+});
+
+router.get('/debug-session', (req, res) => {
+  console.log("Session Data:", req.session);
+  console.log("User Data:", req.user);
+  res.json({
+    session: req.session,
+    user: req.user || null
+  });
 });
 
 // Logout
