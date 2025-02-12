@@ -7,6 +7,7 @@ const MongoStore = require('connect-mongo');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const passportConfig = require('./passportConfig');
+const Event = require('./models/events');
 
 const authRoutes = require('./routes/authRoutes');
 
@@ -50,6 +51,17 @@ passportConfig();
 app.use('/auth', authRoutes);
 
 app.get('/', (req, res) => { res.send("Code and Bourbon Backend Server") });
+
+app.get('/api/events', async (req, res) => {
+  console.log('events');
+  try {
+    const events = await Event.find();
+    res.json(events);
+  } catch (error) {
+    console.error("Error fetching events:", error);
+    res.status(500).json({ message: "Server error while fetching events" });
+  }
+});
 
 const PORT = process.env.PORT;
 
