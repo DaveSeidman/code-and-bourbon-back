@@ -53,7 +53,6 @@ app.use('/auth', authRoutes);
 app.get('/', (req, res) => { res.send("Code and Bourbon Backend Server") });
 
 app.get('/api/events', async (req, res) => {
-  console.log('events');
   try {
     const events = await Event.find();
     res.json(events);

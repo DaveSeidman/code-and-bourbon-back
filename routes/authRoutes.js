@@ -31,11 +31,7 @@ router.get('/google/callback',
 
 // Check authenticated user
 router.get('/user', (req, res) => {
-  if (req.isAuthenticated()) {
-    res.json(req.user);
-  } else {
-    res.status(401).json({ message: "Unauthorized" });
-  }
+  res.json(req.isAuthenticated() ? req.user : null);
 });
 
 router.get('/debug-session', (req, res) => {
