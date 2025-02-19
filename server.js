@@ -52,6 +52,7 @@ app.use('/auth', authRoutes);
 
 app.get('/', (req, res) => { res.send("Code and Bourbon Backend Server") });
 
+// TODO: move to /routes
 app.get('/api/events', async (req, res) => {
   try {
     const events = await Event.find();
@@ -61,6 +62,14 @@ app.get('/api/events', async (req, res) => {
     res.status(500).json({ message: "Server error while fetching events" });
   }
 });
+
+app.get('/api/events/:eventId', async (req, res) => {
+  if (!req.params.eventId) res.json({ error: 'event not found' })
+
+  const event = await Event.findOne({ _id: req.params.eventId })
+  res.json(event);
+  // console.log('requesting event', req.params.eventId)
+})
 
 const PORT = process.env.PORT;
 
