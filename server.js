@@ -7,7 +7,6 @@ const MongoStore = require('connect-mongo');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const passportConfig = require('./passportConfig');
-const Event = require('./models/events');
 const eventRoutes = require('./routes/events');
 const signupRoutes = require('./routes/signups');
 

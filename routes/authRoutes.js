@@ -5,28 +5,38 @@ const router = express.Router();
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:8080";
 
 // Google OAuth login
-router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+router.get('/google', (req, res, next) => {
+  const redirect = req.query.redirect || FRONTEND_URL;
+
+  passport.authenticate('google', {
+    scope: ['profile', 'email'],
+    state: encodeURIComponent(redirect)
+  })(req, res, next);
+});
 
 // Google OAuth callback
-router.get('/google/callback',
-  passport.authenticate('google', {
-    failureRedirect: `${FRONTEND_URL}/login`,
-    session: true
-  }),
+router.get('/google/callback', passport.authenticate('google', {
+  failureRedirect: `${FRONTEND_URL}/login`,
+  session: true
+}),
   (req, res) => {
-    // Optional: Explicitly call req.login again (though Passport should have already done this).
-    // Including it ensures the session is definitely established before redirecting.
+    // Extract redirect path from state
+    console.log(req.query)
+    const redirectUrl = req.query.state
+      ? decodeURIComponent(req.query.state)
+      : FRONTEND_URL;
+
     req.login(req.user, (err) => {
       if (err) {
         console.error('Login error after OAuth callback:', err);
-        // Redirect to a specific error page or fallback
         return res.redirect(`${FRONTEND_URL}/login?error=true`);
       }
-      // Redirect to your frontend. The session cookie is set on this top-level navigation.
-      return res.redirect(FRONTEND_URL);
+
+      return res.redirect(redirectUrl);
     });
   }
 );
+
 
 
 // Check authenticated user
