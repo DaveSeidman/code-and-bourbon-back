@@ -8,6 +8,9 @@ const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const passportConfig = require('./passportConfig');
 const Event = require('./models/events');
+const eventRoutes = require('./routes/events');
+const signupRoutes = require('./routes/signups');
+
 
 const authRoutes = require('./routes/authRoutes');
 
@@ -52,24 +55,9 @@ app.use('/auth', authRoutes);
 
 app.get('/', (req, res) => { res.send("Code and Bourbon Backend Server") });
 
-// TODO: move to /routes
-app.get('/api/events', async (req, res) => {
-  try {
-    const events = await Event.find();
-    res.json(events);
-  } catch (error) {
-    console.error("Error fetching events:", error);
-    res.status(500).json({ message: "Server error while fetching events" });
-  }
-});
+app.use('/api/events', eventRoutes);
+app.use('/api/signups', signupRoutes);
 
-app.get('/api/events/:eventId', async (req, res) => {
-  if (!req.params.eventId) res.json({ error: 'event not found' })
-
-  const event = await Event.findOne({ _id: req.params.eventId })
-  res.json(event);
-  // console.log('requesting event', req.params.eventId)
-})
 
 const PORT = process.env.PORT;
 
