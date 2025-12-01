@@ -10,7 +10,6 @@ const passportConfig = require('./passportConfig');
 const eventRoutes = require('./routes/events');
 const signupRoutes = require('./routes/signups');
 
-
 const authRoutes = require('./routes/authRoutes');
 
 const app = express();
@@ -61,10 +60,11 @@ app.use('/api/signups', signupRoutes);
 const PORT = process.env.PORT;
 
 // Connect to MongoDB
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-}).then(() => {
-  console.log("MongoDB connected");
-  app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+mongoose.connect(process.env.MONGO_URI).then(() => {
+  console.log(`Connected to MongoDB at ${process.env.MONGO_URI}`);
+
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`)
+  });
+
 }).catch(err => console.log(err));
