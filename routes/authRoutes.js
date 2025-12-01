@@ -20,46 +20,41 @@ router.get('/google/callback', passport.authenticate('google', {
   session: true
 }),
   (req, res) => {
-    // Extract redirect path from state
-    console.log(req.query)
     const redirectUrl = req.query.state
       ? decodeURIComponent(req.query.state)
       : FRONTEND_URL;
 
     req.login(req.user, (err) => {
       if (err) {
-        console.error('Login error after OAuth callback:', err);
+        console.error(`[${new Date().toISOString()}] LOGIN ERROR: ${err.message}`);
         return res.redirect(`${FRONTEND_URL}/login?error=true`);
       }
 
+      console.log(`[${new Date().toISOString()}] LOGIN: ${req.user.displayName} (${req.user.email})`);
       return res.redirect(redirectUrl);
     });
   }
 );
-
-
 
 // Check authenticated user
 router.get('/user', (req, res) => {
   res.json(req.isAuthenticated() ? req.user : null);
 });
 
-router.get('/debug-session', (req, res) => {
-  console.log("Session Data:", req.session);
-  console.log("User Data:", req.user);
-  res.json({
-    session: req.session,
-    user: req.user || null
-  });
-});
-
 // Logout
 router.get('/logout', (req, res) => {
+  const user = req.user;
+
   req.logout((err) => {
-    if (err) return res.status(500).json({ message: "Logout failed" });
+    if (err) {
+      console.error(`[${new Date().toISOString()}] LOGOUT ERROR: ${err.message}`);
+      return res.status(500).json({ message: "Logout failed" });
+    }
+
+    console.log(`[${new Date().toISOString()}] LOGOUT: ${user?.displayName} (${user?.email})`);
 
     req.session.destroy(() => {
-      res.clearCookie('connect.sid'); // Clear session cookie
+      res.clearCookie('connect.sid');
       res.status(200).json({ message: "Successfully logged out" });
     });
   });

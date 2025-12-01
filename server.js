@@ -14,6 +14,10 @@ const authRoutes = require('./routes/authRoutes');
 
 const app = express();
 
+if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', 1);
+}
+
 // Middleware
 app.use(cors({
   origin: ["http://localhost:8080", "https://codeandbourbon.com"],
@@ -41,10 +45,6 @@ app.use(session({
 
 app.use(passport.initialize());
 app.use(passport.session());
-
-if (process.env.NODE_ENV === 'production') {
-  app.set('trust proxy', 1); // trust the first proxy
-}
 
 passportConfig();
 
