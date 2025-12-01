@@ -5,7 +5,7 @@ const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const Member = require('./models/member');
 
 const BACKEND_URL = process.env.NODE_ENV === 'production'
-  ? 'https://code-and-bourbon-back.onrender.com'
+  ? 'https://api.codeandbourbon.com'
   : `http://localhost:${process.env.PORT}`;
 
 module.exports = function () {
