@@ -27,6 +27,8 @@ const serializeMember = (member) => {
     displayName: member.displayName,
     email: member.email,
     profilePicture: member.profilePicture,
+    chatAccessRequestedAt: member.chatAccessRequestedAt,
+    chatAccessRequestCount: member.chatAccessRequestCount || 0,
     chatApproved: Boolean(member.chatApproved),
     chatApprovedAt: member.chatApprovedAt,
     canUseChat: canAccessChat(member),
@@ -36,6 +38,7 @@ const serializeMember = (member) => {
 
 module.exports = {
   canAccessChat,
+  getAdminEmails,
   isChatAdmin,
   serializeMember,
 };

@@ -1,12 +1,16 @@
 const express = require("express");
 
 const Member = require("../models/member");
+const {
+  sendChatAccessRequestNotification,
+} = require("../utils/chatNotifications");
 const { getMemberRoom, getRecentChatMessages } = require("../utils/chat");
 const {
   canAccessChat,
   isChatAdmin,
   serializeMember,
 } = require("../utils/memberAccess");
+const REQUEST_NOTIFICATION_COOLDOWN_MS = 1000 * 60 * 30;
 
 const requireAuth = (req, res, next) => {
   if (!req.user) {
@@ -85,6 +89,70 @@ module.exports = function createChatRoutes({ io }) {
     }
   });
 
+  router.post("/request-access", requireAuth, async (req, res) => {
+    try {
+      const member = await Member.findById(req.user._id);
+
+      if (!member) {
+        return res.status(404).json({ error: "Member not found" });
+      }
+
+      if (canAccessChat(member)) {
+        return res.json({
+          member: serializeMember(member),
+          message: "You already have chat access.",
+          requested: false,
+        });
+      }
+
+      const now = new Date();
+      const lastNotifiedAt = member.chatAccessRequestNotifiedAt
+        ? member.chatAccessRequestNotifiedAt.getTime()
+        : 0;
+      const shouldNotify =
+        !lastNotifiedAt ||
+        now.getTime() - lastNotifiedAt >= REQUEST_NOTIFICATION_COOLDOWN_MS;
+
+      console.log(
+        `[${now.toISOString()}] CHAT ACCESS REQUEST RECEIVED: ${member.displayName || "Unknown"} (${member.email}) count=${(member.chatAccessRequestCount || 0) + 1}`,
+      );
+
+      member.chatAccessRequestedAt = now;
+      member.chatAccessRequestCount = (member.chatAccessRequestCount || 0) + 1;
+
+      if (shouldNotify) {
+        member.chatAccessRequestNotifiedAt = now;
+      }
+
+      await member.save();
+
+      const notificationResult = shouldNotify
+        ? await sendChatAccessRequestNotification({
+            member,
+            requestCount: member.chatAccessRequestCount,
+            requestedAt: now,
+          })
+        : {
+            delivered: false,
+            reason: "Recent request already notified. Cooldown still active.",
+          };
+
+      return res.json({
+        member: serializeMember(member),
+        message: shouldNotify
+          ? notificationResult.delivered
+            ? "Knock received. The gatekeeper has been pinged."
+            : "Knock received. Request logged for review."
+          : "Request already queued. Sit tight.",
+        notification: notificationResult,
+        requested: true,
+      });
+    } catch (error) {
+      console.error("Error requesting chat access:", error);
+      return res.status(500).json({ error: "Unable to request chat access" });
+    }
+  });
+
   router.post(
     "/members/access",
     requireAuth,
@@ -108,6 +176,12 @@ module.exports = function createChatRoutes({ io }) {
         member.chatApproved = approved;
         member.chatApprovedAt = approved ? new Date() : null;
         member.chatApprovedBy = approved ? req.user._id : null;
+        member.chatAccessRequestedAt = approved
+          ? null
+          : member.chatAccessRequestedAt;
+        member.chatAccessRequestNotifiedAt = approved
+          ? null
+          : member.chatAccessRequestNotifiedAt;
         await member.save();
 
         const payload = serializeMember(member);
