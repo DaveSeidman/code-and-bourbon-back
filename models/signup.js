@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const SignupSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'Member', required: true },
   eventId: { type: mongoose.Schema.Types.ObjectId, ref: 'Event', required: true },
   status: { type: Number, enum: [-1, 0, 1], required: true }
 }, {

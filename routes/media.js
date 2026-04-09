@@ -8,7 +8,6 @@ const uploadDir = process.env.NODE_ENV === 'production'
   ? '/var/data/media'
   : './media';
 
-// Ensure directory exists
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
@@ -24,6 +23,13 @@ const upload = multer({ storage });
 
 // Upload
 router.post('/upload', upload.single('file'), (req, res) => {
+  console.log('Headers:', req.headers);
+  console.log('File:', req.file);
+  console.log('Body:', req.body);
+
+  if (!req.file) {
+    return res.status(400).json({ error: 'No file uploaded' });
+  }
   res.json({
     filename: req.file.filename,
     url: `/api/media/${req.file.filename}`,
@@ -32,7 +38,12 @@ router.post('/upload', upload.single('file'), (req, res) => {
 
 // Serve
 router.get('/:filename', (req, res) => {
-  res.sendFile(path.join(uploadDir, req.params.filename));
+  console.log('here')
+  const filePath = path.join(uploadDir, req.params.filename);
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ error: 'File not found' });
+  }
+  res.sendFile(path.resolve(filePath));
 });
 
 // List all
@@ -46,7 +57,10 @@ router.get('/', (req, res) => {
 
 // Delete
 router.delete('/:filename', (req, res) => {
-  fs.unlinkSync(path.join(uploadDir, req.params.filename));
+  const filePath = path.join(uploadDir, req.params.filename);
+  if (fs.existsSync(filePath)) {
+    fs.unlinkSync(filePath);
+  }
   res.json({ success: true });
 });
 
