@@ -159,9 +159,13 @@ module.exports = function createChatRoutes({ io }) {
     requireChatAdmin,
     async (req, res) => {
       try {
-        const { identifier, approved } = req.body;
+        const { identifier, approved, clearRequest } = req.body;
 
-        if (typeof identifier !== "string" || typeof approved !== "boolean") {
+        if (
+          typeof identifier !== "string" ||
+          typeof approved !== "boolean" ||
+          (clearRequest !== undefined && typeof clearRequest !== "boolean")
+        ) {
           return res.status(400).json({
             error: "identifier and approved are required",
           });
@@ -176,12 +180,12 @@ module.exports = function createChatRoutes({ io }) {
         member.chatApproved = approved;
         member.chatApprovedAt = approved ? new Date() : null;
         member.chatApprovedBy = approved ? req.user._id : null;
-        member.chatAccessRequestedAt = approved
-          ? null
-          : member.chatAccessRequestedAt;
-        member.chatAccessRequestNotifiedAt = approved
-          ? null
-          : member.chatAccessRequestNotifiedAt;
+
+        if (approved || clearRequest) {
+          member.chatAccessRequestedAt = null;
+          member.chatAccessRequestNotifiedAt = null;
+        }
+
         await member.save();
 
         const payload = serializeMember(member);
